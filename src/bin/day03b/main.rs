@@ -5,8 +5,6 @@ use std::collections::HashMap;
 
 fn main() {
     println!("{}", solve(289326));
-    // first attempt:  476681 (too high)
-    // second attempt: 295229 (correct)
 }
 
 
@@ -35,6 +33,25 @@ struct Cursor {
 }
 
 impl Cursor {
+
+    //  index reference:
+
+    //  37  36  35  34  33  32  31
+    //  38  17  16  15  14  13  30
+    //  39  18   5   4   3  12  29
+    //  40  19   6   1   2  11  28
+    //  41  20   7   8   9  10  27
+    //  42  21  22  23  24  25  26
+    //  43  44  45  46  47  48  49
+
+    // value reference:
+
+    // 147  142  133  122   59
+    // 304    5    4    2   57
+    // 330   10    1    1   54
+    // 351   11   23   25   26
+    // 362  747  806  880  931
+
     // initialize new cursor with starting conditions described in the question
     fn new() -> Cursor {
         let mut matrix = PointMatrix::new();
@@ -54,9 +71,6 @@ impl Cursor {
     // return the value stored there
     fn next(&mut self) -> u32 {
 
-        // println!("next()");
-        // println!("\tstart: {:?}", self);
-
         // EDGE_INDEX
         let (next_edge_index, is_new_edge) = if self.edge_index == self.edge_length - 1 {
             (0, true)
@@ -71,18 +85,7 @@ impl Cursor {
             (self.ring_index + 1, false)
         };
 
-        //  reference:
-
-        //  37  36  35  34  33  32  31
-        //  38  17  16  15  14  13  30
-        //  39  18   5   4   3  12  29
-        //  40  19   6   1   2  11  28
-        //  41  20   7   8   9  10  27
-        //  42  21  22  23  24  25  26
-        //  43  44  45  46  47  48  49
-
         // EDGE_LENGTH
-        // let is_new_ring = is_new_edge && self.direction == Direction::RIGHT;
         let next_edge_length = if is_new_ring {
             self.edge_length + 2
         } else {
@@ -90,30 +93,8 @@ impl Cursor {
         };
 
         // DIRECTION
-        let is_time_to_turn = (
-                // a turn within an existing ring
-                is_new_edge
-                && !is_new_ring
-            ) ||
-            (
-                true
-                // or a turn just after starting a new ring
-                // self.point != Point { x: 0, y: 0 }
-                // && !is_new_edge
-                && self.ring_index == 0
-                // && self.edge_index == 0
-                && self.direction == Direction::RIGHT
-                // && {
-                //     let value = self.lookup_or_compute_value(&self.point);
-                //     let root = (value as f64).sqrt() as u32;
-                //     let test_square = root.pow(2);
-                //     if test_square == value {
-                //         println!("value is a square", );
-                //     }
-                //     (test_square == value) && (root % 2 == 1)
-                // }
-
-            );
+        let is_time_to_turn = (is_new_edge && !is_new_ring) // a turn within an existing ring
+                || (self.ring_index == 0 && self.direction == Direction::RIGHT); // a turn after starting a new ring
         let next_direction = if is_time_to_turn {
             *self.direction.turn()
         } else {
@@ -127,17 +108,8 @@ impl Cursor {
             y: self.point.y + dy,
         };
 
-        if is_time_to_turn {
-            println!("turn {:?}", next_direction);
-        }
-
         // VALUE
-        let next_value = self.lookup_or_compute_value(&next_point);
-
-        // println!("\tis_new_edge -> {}", is_new_edge);
-        // println!("\tis_new_ring -> {}", is_new_ring);
-        // println!("\tis_time_to_turn -> {}", is_time_to_turn);
-        println!("\tnext_value -> {}", next_value);
+        let next_value = self.compute_value(&next_point);
 
         // update cursor's attributes to represent the next state
         self.matrix.insert((next_point.x, next_point.y), next_value);
@@ -147,31 +119,22 @@ impl Cursor {
         self.edge_length = next_edge_length;
         self.point = next_point;
 
-        println!("\tend: {:?}", self);
+        // println!("\tend: {:?}", self);
 
 
         // return the value at the next state
         next_value
     }
 
-    fn lookup_or_compute_value(&self, point: &Point) -> u32 {
+    fn compute_value(&self, point: &Point) -> u32 {
         match self.matrix.get(&(point.x, point.y)) {
-            // Some(value) => *value,
-            Some(value) => {
-                panic!(
-                    "found value {} when this cell should have been blank",
-                    value
-                )
-            }
-            None => {
-                let mut sum = 0;
-                for neighbor in point.neighbors().iter() {
-                    if let Some(value) = self.matrix.get(&(neighbor.x, neighbor.y)) {
-                        sum += value;
-                    }
+            Some(value) => panic!("found value {} in cell expected to be blank", value),
+            None => point.neighbors().iter().map(|n| {
+                match self.matrix.get(&(n.x, n.y)) {
+                    Some(value) => *value,
+                    None => 0,
                 }
-                sum
-            }
+            }).sum(),
         }
     }
 }

@@ -200,25 +200,43 @@ impl Point {
 }
 
 
-// the tests don't make much sense atm because value_at_index was removed; they need to be reworked
-// to be useful.
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn value_at_index_1() {
-    assert!(value_at_index(1) == 1);
-}
+    #[test]
+    fn value_at_index_1() {
+        let mut cursor = Cursor::new();
+        for i in 0..5 {
+            cursor.next();
+        }
+        assert_eq!(cursor.matrix.get(&(0, 0)), Some(1).as_ref());
+    }
 
-#[test]
-fn value_at_index_2() {
-    assert!(value_at_index(2) == 1);
-}
+    #[test]
+    fn value_at_index_2() {
+        let mut cursor = Cursor::new();
+        for i in 0..5 {
+            cursor.next();
+        }
+        assert_eq!(cursor.matrix.get(&(1, 0)), Some(1).as_ref());
+    }
 
-#[test]
-fn value_at_index_4() {
-    assert!(value_at_index(4) == 4);
-}
+    #[test]
+    fn value_at_index_4() {
+        let mut cursor = Cursor::new();
+        for i in 0..5 {
+            cursor.next();
+        }
+        assert_eq!(cursor.matrix.get(&(0, 1)), Some(4).as_ref());
+    }
 
-#[test]
-fn value_at_index_5() {
-    assert!(value_at_index(5) == 5);
+    #[test]
+    fn value_at_index_5() {
+        let mut cursor = Cursor::new();
+        for i in 0..5 {
+            cursor.next();
+        }
+        assert_eq!(cursor.matrix.get(&(-1, 1)), Some(5).as_ref());
+    }
 }

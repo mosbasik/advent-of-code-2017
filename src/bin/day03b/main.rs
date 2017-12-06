@@ -24,11 +24,11 @@ type PointMatrix = HashMap<(i32, i32), u32>;
 
 #[derive(Debug)]
 struct Cursor {
-    matrix: PointMatrix,  // data structure holding the values computed by the cursor so far
-    direction: Direction,  // the direction the cursor is "pointed" (by extension which edge it's on)
-    edge_index: u32,  // position of cursor from beginning of current edge (edges are zero-indexed)
-    edge_length: u32,  // size of current edge
-    point: Point,  // (x, y) coords of cursor in overall matrix (the initial value is at (0, 0))
+    matrix: PointMatrix, // data structure holding the values computed by the cursor so far
+    direction: Direction, // the direction the cursor is "pointed" (by extension which edge it's on)
+    edge_index: u32, // position of cursor from beginning of current edge (edges are zero-indexed)
+    edge_length: u32, // size of current edge
+    point: Point, // (x, y) coords of cursor in overall matrix (the initial value is at (0, 0))
 }
 
 impl Cursor {
@@ -59,33 +59,27 @@ impl Cursor {
         //  42  21  22  23  24  25  26
         //  43  44  45  46  47  48  49
 
-        let is_time_to_turn =
-                self.edge_index == self.edge_length - 1  // we're in the edge's last spot
-                && self.direction != Direction::RIGHT;  // and we're NOT in the last edge of the ring
-
-        // DIRECTION
-        let next_direction = match is_time_to_turn {
-            true => *self.direction.turn(),
-            false => self.direction,
-        };
-
-        // FIXME these conditions as written do not correctly set is_new_edge and is_new_ring, but
-        // such conditions do exist; I just need to think about them a little more
-        let is_new_edge = self.direction != next_direction;
-        let is_new_ring =
-                self.direction == Direction::RIGHT
-                && next_direction == Direction::UP;
-
         // EDGE_INDEX
-        let next_edge_index = match is_new_edge {
-            true => 0,
-            false => self.edge_index + 1,
+        let (next_edge_index, is_new_edge) = if self.edge_index == self.edge_length - 1 {
+            (0, true)
+        } else {
+            (self.edge_index + 1, false)
         };
 
         // EDGE_LENGTH
-        let next_edge_length = match is_new_ring {
-            true => self.edge_length + 2,
-            false => self.edge_length,
+        let is_new_ring = is_new_edge && self.direction == Direction::RIGHT;
+        let next_edge_length = if is_new_ring {
+            self.edge_length + 2
+        } else {
+            self.edge_length
+        };
+
+        // DIRECTION
+        let is_time_to_turn = is_new_edge && !is_new_ring;
+        let next_direction = if is_time_to_turn {
+            *self.direction.turn()
+        } else {
+            self.direction
         };
 
         // POINT
@@ -95,6 +89,7 @@ impl Cursor {
             y: self.point.y + dy,
         };
 
+        // VALUE
         let next_value = self.lookup_or_compute_value(&next_point);
 
         // update cursor's attributes to represent the next state
@@ -138,19 +133,19 @@ impl Direction {
     fn turn(&self) -> &Direction {
         match *self {
             Direction::RIGHT => &Direction::UP,
-            Direction::UP    => &Direction::LEFT,
-            Direction::LEFT  => &Direction::DOWN,
-            Direction::DOWN  => &Direction::RIGHT,
+            Direction::UP => &Direction::LEFT,
+            Direction::LEFT => &Direction::DOWN,
+            Direction::DOWN => &Direction::RIGHT,
         }
     }
 
     // return tuple of changes to x and y needed to shift one space in the "self" diretion
     fn dxdy(&self) -> (i32, i32) {
         match *self {
-            Direction::RIGHT => ( 1,  0),
-            Direction::UP    => ( 0,  1),
-            Direction::LEFT  => (-1,  0),
-            Direction::DOWN  => ( 0, -1),
+            Direction::RIGHT => (1, 0),
+            Direction::UP => (0, 1),
+            Direction::LEFT => (-1, 0),
+            Direction::DOWN => (0, -1),
         }
     }
 }
@@ -163,19 +158,45 @@ struct Point {
 }
 
 impl Point {
-    fn neighbors(&self) -> [Point; 8] {[
-        Point { x: self.x + 1, y: self.y },
+    fn neighbors(&self) -> [Point; 8] {
+        [
+            Point {
+                x: self.x + 1,
+                y: self.y,
+            },
 
-        Point { x: self.x + 1, y: self.y + 1 },
-        Point { x: self.x,     y: self.y + 1 },
-        Point { x: self.x - 1, y: self.y + 1 },
+            Point {
+                x: self.x + 1,
+                y: self.y + 1,
+            },
+            Point {
+                x: self.x,
+                y: self.y + 1,
+            },
+            Point {
+                x: self.x - 1,
+                y: self.y + 1,
+            },
 
-        Point { x: self.x - 1, y: self.y },
+            Point {
+                x: self.x - 1,
+                y: self.y,
+            },
 
-        Point { x: self.x - 1, y: self.y - 1 },
-        Point { x: self.x,     y: self.y - 1 },
-        Point { x: self.x + 1, y: self.y - 1 },
-    ]}
+            Point {
+                x: self.x - 1,
+                y: self.y - 1,
+            },
+            Point {
+                x: self.x,
+                y: self.y - 1,
+            },
+            Point {
+                x: self.x + 1,
+                y: self.y - 1,
+            },
+        ]
+    }
 }
 
 

@@ -40,3 +40,10 @@ Question: `A Maze of Twisty Trampolines, All Alike <http://adventofcode.com/2017
 
 - Part 1 Solution: `Number of steps to exit the instruction space </src/bin/day05a.rs>`_
 - Part 2 Solution: `Same as before, but with new rule about modifying read instructions </src/bin/day05b.rs>`_
+
+Day 06
+------
+
+Question: `Memory Reallocation <http://adventofcode.com/2017/day/6>`_
+
+- Part 1 Solution: `Zero out the biggest bank and distribute its blocks one at a time across all banks </src/bin/day06a.rs>`_

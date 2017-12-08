@@ -5,3 +5,4 @@ authors = ["Peter Henry <me@peterhenry.net>"]
 
 [dependencies]
 unicode-segmentation = "1.1.0"
+nom = "3.2.1"

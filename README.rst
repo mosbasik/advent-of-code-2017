@@ -46,4 +46,5 @@ Day 06
 
 Question: `Memory Reallocation <http://adventofcode.com/2017/day/6>`_
 
-- Part 1 Solution: `Zero out the biggest bank and distribute its blocks one at a time across all banks </src/bin/day06a.rs>`_
+- Part 1 Solution: `Number of iterations before a duplicate state is reached </src/bin/day06a.rs>`_
+- Part 2 Solution: `Number of iterations between first pair of duplicated states </src/bin/day06b.rs>`_

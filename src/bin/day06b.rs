@@ -2,7 +2,8 @@
 
 extern crate unicode_segmentation;
 
-use std::collections::HashSet;
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::io;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -13,11 +14,11 @@ fn main() {
 }
 
 
-fn solve(c: &mut MyCursor) -> usize {
-    while c.first_loop == None {
-        c.step();
+fn solve(my_cursor: &mut MyCursor) -> usize {
+    while my_cursor.first_repeat == None {
+        my_cursor.step();
     }
-    c.loop_size().unwrap()
+    my_cursor.loop_size().unwrap()
 }
 
 
@@ -36,31 +37,24 @@ struct MyCursor {
     // number of times step() has been called on this struct
     steps: usize,
 
-    // hashset of all previously seen states of the memory banks
-    seen_states: HashSet<Vec<usize>>,
+    // hashmap where the keys are all the previously seen states of the memory banks and the values
+    // are the step counts when those states occured
+    seen_states: HashMap<Vec<usize>, usize>,
 
     // contains None until the *second* occurance of any previously seen state is found, then Some
-    // thereafter (containing a bookmark of the state and the number of steps taken to reach it).
-    // Note: finding additional repeated states after the first will not update this value.
+    // thereafter (containing a bookmark of the state and the number of steps taken to reach it
+    // since the beginning of the program). Note: finding additional repeated states after the
+    // first will not update this value.
     first_repeat: Option<Bookmark>,
-
-    // contains None until the *second* occurance of the state in first_repeat is found, then Some
-    // thereafter (containing a bookmark of the state and the number of steps taken to reach it).
-    // Note: finding additional occurances of the state in first_repeat after the second will not
-    // update this value.
-    first_loop: Option<Bookmark>,
 }
 
 impl MyCursor {
     fn from_string(input: &str) -> MyCursor {
-        let banks = input.unicode_words().map(|w| w.parse().unwrap()).collect();
-        // println!("{} steps\t{:?}", 0, banks);
         MyCursor {
-            banks,
+            banks: input.unicode_words().map(|w| w.parse().unwrap()).collect(),
             steps: 0,
-            seen_states: HashSet::new(),
+            seen_states: HashMap::new(),
             first_repeat: None,
-            first_loop: None,
         }
     }
 
@@ -104,45 +98,31 @@ impl MyCursor {
             *(self.banks.get_mut((max_index + i + 1) % length).unwrap()) += 1;
         }
 
-        // try to add the current (just updated) state to the set of seen states
-        let insert_succeeded = self.seen_states.insert(self.banks.clone());
+        // try to insert the current (just updated) state to the map of seen states
+        let insert_succeeded = match self.seen_states.entry(self.banks.clone()) {
+            Entry::Occupied(..) => false,
+            Entry::Vacant(e) => {
+                e.insert(self.steps);
+                true
+            }
+        };
 
-        // if that fails because the current state's already been seen before
-        if !insert_succeeded {
-
-            // check if a first repeat state has been bookmarked yet
-            match self.first_repeat {
-                None => {
-                    // if not, bookmark the current state as the first repeated state
-                    self.first_repeat = Some(Bookmark {
-                        banks: self.banks.clone(),
-                        steps: self.steps,
-                    });
-                }
-                Some(ref first_repeat) => {
-                    // if so, and if the current state matches the first repeat state, and if a
-                    // first loop bookmark doesn't already exist
-                    if self.banks == first_repeat.banks && self.first_loop == None {
-                        // bookmark the current state as the first looped state
-                        self.first_loop = Some(Bookmark {
-                            banks: self.banks.clone(),
-                            steps: self.steps,
-                        });
-                    }
-                }
-            };
+        // if the insertion failed (because the current state's already been seen before) and no
+        // first repeated state bookmark exists yet
+        if !insert_succeeded && self.first_repeat == None {
+            // bookmark the current state as the first repeated state
+            self.first_repeat = Some(Bookmark {
+                banks: self.banks.clone(),
+                steps: self.steps,
+            });
         }
-
-        // println!("{} steps\t{:?}", self.steps, self.banks);
     }
 
     fn loop_size(&self) -> Option<usize> {
-        if let Some(ref first_loop) = self.first_loop {
-            if let Some(ref first_repeat) = self.first_repeat {
-                return Some(first_loop.steps - first_repeat.steps);
-            }
+        match self.first_repeat {
+            None => None,
+            Some(ref fr) => Some(fr.steps - self.seen_states.get(&(self.banks)).unwrap()),
         }
-        None
     }
 }
 

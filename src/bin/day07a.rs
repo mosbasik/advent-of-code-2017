@@ -2,17 +2,65 @@
 
 #[macro_use]
 extern crate nom;
+extern crate petgraph;
 
-use std::io::{self, BufRead};
 use nom::{alpha, digit};
+use std::collections::HashMap;
+use std::io::{self, BufRead};
+use petgraph::Direction;
+use petgraph::graphmap::DiGraphMap;
 
 
 fn main() {
+    // get puzzle input from sdin
     let stdin = io::stdin();
     let lines: Vec<String> = stdin.lock().lines().map(|l| l.unwrap()).collect();
 
+    // initialize tree and weight map
+    let mut tree: DiGraphMap<&str, ()> = DiGraphMap::new();
+    let mut weights: HashMap<&str, i32> = HashMap::new();
+
+    // populate tree and weight map using puzzle input
     for line in lines.iter() {
-        println!("{:?}", line_parser(line.as_bytes()).to_result().unwrap());
+
+        // parse line of input into its sigificant values
+        let (program, weight, children_opt) = line_parser(line.as_bytes()).to_result().unwrap();
+
+        // insert programs's own data into tree and weight map
+        if !tree.contains_node(program) {
+            tree.add_node(program);
+            weights.insert(program, weight);
+        }
+
+        // insert programs's children's data into structures (if applicable)
+        match children_opt {
+            None => (),
+            Some(children) => {
+                for child in children.iter() {
+                    if !tree.contains_node(child) {
+                        tree.add_node(child);
+                    }
+                    tree.add_edge(program, child, ());
+                }
+            }
+        }
+    }
+
+    // find root of tree
+    println!("{}", get_root(&tree));
+}
+
+
+fn get_root<'a>(tree: &'a DiGraphMap<&str, ()>) -> &'a str {
+    get_root_recursive(tree, tree.nodes().next().unwrap())
+}
+
+fn get_root_recursive<'a>(tree: &'a DiGraphMap<&str, ()>, node: &'a str) -> &'a str {
+    let mut parents: Vec<&str> = tree.neighbors_directed(node, Direction::Incoming).collect();
+    match parents.len() {
+        0 => node,
+        1 => get_root_recursive(tree, parents.pop().unwrap()),
+        _ => panic!("\"{}\" has multiple parents: {:?}", node, parents),
     }
 }
 

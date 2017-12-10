@@ -48,3 +48,10 @@ Question: `Memory Reallocation <http://adventofcode.com/2017/day/6>`_
 
 - Part 1 Solution: `Number of iterations before a duplicate state is reached </src/bin/day06a.rs>`_
 - Part 2 Solution: `Number of iterations between first pair of duplicated states </src/bin/day06b.rs>`_
+
+Day 07
+------
+
+Question: `Recursive Circus <http://adventofcode.com/2017/day/7>`_
+
+- Part 1 Solution: `Parse input and find root of tree </src/bin/day07a.rs>`_
